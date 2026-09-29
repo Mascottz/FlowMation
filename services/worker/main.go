@@ -4,10 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"io"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -16,7 +16,7 @@ import (
 
 type workflowStep struct { Key string `json:"key"` }
 type workflowPayload struct { Steps []workflowStep `json:"steps"` }
-type runMessage struct { Run struct { ID string `json:"id"`; WorkflowID string `json:"workflowId"` } `json:"run"` Workflow json.RawMessage `json:"workflow"` }
+type runMessage struct { Run struct { ID string `json:"id"`; WorkflowID string `json:"workflowId"` } `json:"run"`; Workflow json.RawMessage `json:"workflow"` }
 
 
 func persistStepRuns(database *sql.DB, runID, workflowID, status string, payload []byte) {
@@ -44,18 +44,15 @@ func main() {
 		var message runMessage
 		if err := json.Unmarshal([]byte(result[1]), &message); err != nil { log.Printf("invalid run payload: %v", err); continue }
 		if database != nil { _, _ = database.Exec(`UPDATE workflow_runs SET status = 'running', started_at = NOW() WHERE id = $1`, message.Run.ID) }
-		request, _ := http.NewRequest(http.MethodPost, engineURL+"/validate", bytesReader(message.Workflow))
+		request, _ := http.NewRequest(http.MethodPost, engineURL+"/validate", strings.NewReader(string(message.Workflow)))
 		request.Header.Set("Content-Type", "application/json")
 		client := &http.Client{Timeout: 5 * time.Second}
 		response, err := client.Do(request)
 		status := "failed"
-		if err == nil && response.StatusCode >= 200 && response.StatusCode < 300 { response.Body.Close(); executeRequest, _ := http.NewRequest(http.MethodPost, engineURL+"/execute", bytesReader(message.Workflow)); executeRequest.Header.Set("Content-Type", "application/json"); executeResponse, executeErr := client.Do(executeRequest); if executeErr == nil && executeResponse.StatusCode >= 200 && executeResponse.StatusCode < 300 { status = "succeeded" }; if executeResponse != nil { executeResponse.Body.Close() } }
+		if err == nil && response.StatusCode >= 200 && response.StatusCode < 300 { response.Body.Close(); executeRequest, _ := http.NewRequest(http.MethodPost, engineURL+"/execute", strings.NewReader(string(message.Workflow))); executeRequest.Header.Set("Content-Type", "application/json"); executeResponse, executeErr := client.Do(executeRequest); if executeErr == nil && executeResponse.StatusCode >= 200 && executeResponse.StatusCode < 300 { status = "succeeded" }; if executeResponse != nil { executeResponse.Body.Close() } }
 		if database != nil { _, _ = database.Exec(`UPDATE workflow_runs SET status = $1, finished_at = NOW(), error_message = CASE WHEN $1 = 'failed' THEN 'Rust engine validation failed' ELSE NULL END WHERE id = $2`, status, message.Run.ID); persistStepRuns(database, message.Run.ID, message.Run.WorkflowID, status, message.Workflow) }
 		_ = queue.Set(context.Background(), "flowmation:run:"+message.Run.ID, status, 24*time.Hour).Err()
 		log.Printf("workflow run %s completed with status %s", message.Run.ID, status)
 	}
 }
 
-func bytesReader(data []byte) *reader { return &reader{data: data} }
-type reader struct { data []byte; offset int }
-func (r *reader) Read(p []byte) (int, error) { if r.offset >= len(r.data) { return 0, io.EOF }; n := copy(p, r.data[r.offset:]); r.offset += n; return n, nil }
