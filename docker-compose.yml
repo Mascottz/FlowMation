@@ -1,12 +1,39 @@
 services:
   gateway:
     build: ./services/gateway
+    environment:
+      FLOWMATION_ENGINE_URL: http://engine:8081
+      DATABASE_URL: postgres://flowmation:flowmation_local@postgres:5432/flowmation?sslmode=disable
+    depends_on:
+      engine:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
     ports:
       - "8080:8080"
   engine:
     build: ./services/engine
     ports:
       - "8081:8081"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  worker:
+    build: ./services/worker
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      DATABASE_URL: postgres://flowmation:flowmation_local@postgres:5432/flowmation?sslmode=disable
+      FLOWMATION_ENGINE_URL: http://engine:8081
+    depends_on:
+      engine:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
   postgres:
     image: postgres:16-alpine
     environment:
@@ -15,7 +42,20 @@ services:
       POSTGRES_PASSWORD: flowmation_local
     ports:
       - "5432:5432"
+    volumes:
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
+      - ./database/seed.sql:/docker-entrypoint-initdb.d/002_seed.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U flowmation -d flowmation"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
   redis:
     image: redis:7-alpine
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
