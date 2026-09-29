@@ -43,14 +43,14 @@ func main() {
 		if err != nil { log.Printf("queue read failed: %v", err); time.Sleep(time.Second); continue }
 		var message runMessage
 		if err := json.Unmarshal([]byte(result[1]), &message); err != nil { log.Printf("invalid run payload: %v", err); continue }
-		if database != nil { _, _ = database.Exec(`UPDATE workflow_runs SET status = 'running', started_at = NOW() WHERE id = $1`, message.Run.ID) }
+		if database != nil { if _, updateErr := database.Exec(`UPDATE workflow_runs SET status = 'running', started_at = NOW() WHERE id = $1`, message.Run.ID); updateErr != nil { log.Printf("could not mark run running: %v", updateErr) } }
 		request, _ := http.NewRequest(http.MethodPost, engineURL+"/validate", strings.NewReader(string(message.Workflow)))
 		request.Header.Set("Content-Type", "application/json")
 		client := &http.Client{Timeout: 5 * time.Second}
 		response, err := client.Do(request)
 		status := "failed"
 		if err == nil && response.StatusCode >= 200 && response.StatusCode < 300 { response.Body.Close(); executeRequest, _ := http.NewRequest(http.MethodPost, engineURL+"/execute", strings.NewReader(string(message.Workflow))); executeRequest.Header.Set("Content-Type", "application/json"); executeResponse, executeErr := client.Do(executeRequest); if executeErr == nil && executeResponse.StatusCode >= 200 && executeResponse.StatusCode < 300 { status = "succeeded" }; if executeResponse != nil { executeResponse.Body.Close() } }
-		if database != nil { _, _ = database.Exec(`UPDATE workflow_runs SET status = $1, finished_at = NOW(), error_message = CASE WHEN $1 = 'failed' THEN 'Rust engine validation failed' ELSE NULL END WHERE id = $2`, status, message.Run.ID); persistStepRuns(database, message.Run.ID, message.Run.WorkflowID, status, message.Workflow) }
+		if database != nil { var executionError interface{}; if status == "failed" { executionError = "Rust engine execution failed" }; if result, updateErr := database.Exec(`UPDATE workflow_runs SET status = $1, finished_at = NOW(), error_message = $2 WHERE id = $3`, status, executionError, message.Run.ID); updateErr != nil { log.Printf("could not finalize run: %v", updateErr) } else if affected, rowsErr := result.RowsAffected(); rowsErr == nil && affected == 0 { log.Printf("run %s was not found while finalizing", message.Run.ID) }; persistStepRuns(database, message.Run.ID, message.Run.WorkflowID, status, message.Workflow) }
 		_ = queue.Set(context.Background(), "flowmation:run:"+message.Run.ID, status, 24*time.Hour).Err()
 		log.Printf("workflow run %s completed with status %s", message.Run.ID, status)
 	}
