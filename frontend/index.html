@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FlowMation, calm automation for serious teams</title>
+  <style>
+    :root {
+      --ink: #1f2933;
+      --muted: #7b8793;
+      --soft: #a7b0b8;
+      --paper: #f7f8f5;
+      --card: #ffffff;
+      --line: #e7ebe5;
+      --navy: #14232d;
+      --navy-2: #1b303a;
+      --sage: #b9d7c3;
+      --sage-2: #dceee1;
+      --lavender: #dedaf5;
+      --sand: #f2e8d8;
+      --coral: #efaa91;
+      --shadow: 0 18px 50px rgba(35, 48, 55, .08);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: var(--paper); color: var(--ink); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; letter-spacing: -.01em; }
+    button { font: inherit; border: 0; cursor: pointer; }
+    .app { display: flex; min-height: 100vh; }
+    .sidebar { width: 252px; background: var(--navy); color: #eef3ee; padding: 28px 18px 20px; display: flex; flex-direction: column; }
+    .brand { display:flex; align-items:center; gap: 11px; padding: 0 11px 39px; }
+    .brand-mark { width: 31px; height:31px; border-radius: 10px 10px 10px 3px; background: var(--sage); display:grid; place-items:center; color: var(--navy); box-shadow: inset 0 0 0 5px rgba(20,35,45,.07); }
+    .brand-name { font-weight: 750; font-size: 18px; letter-spacing: -.04em; }
+    .brand-name span { color: var(--sage); }
+    .eyebrow { text-transform: uppercase; font-size: 10px; letter-spacing: .13em; color: #8ea0a8; font-weight: 750; padding: 0 12px 10px; }
+    nav { display:grid; gap: 5px; }
+    .nav-item { color:#aab8bd; display:flex; align-items:center; gap: 12px; padding: 11px 12px; border-radius: 10px; font-size: 13px; font-weight: 600; background: transparent; text-align:left; }
+    .nav-item:hover, .nav-item.active { color: #fff; background: var(--navy-2); }
+    .nav-item.active { box-shadow: inset 3px 0 var(--sage); }
+    .nav-icon { width: 18px; height: 18px; opacity: .9; }
+    .workspace { margin-top: auto; padding: 16px 12px 0; border-top: 1px solid rgba(255,255,255,.1); }
+    .workspace-label { font-size: 11px; color: #93a6ac; margin-bottom: 11px; }
+    .workspace-user { display:flex; align-items:center; gap: 10px; }
+    .avatar { width: 30px; height:30px; display:grid; place-items:center; border-radius: 50%; background: var(--coral); color: var(--navy); font-size: 11px; font-weight: 800; }
+    .workspace-user strong { display:block; font-size: 12px; }
+    .workspace-user small { color: #91a1a7; font-size: 10px; }
+    .main { flex:1; min-width:0; padding: 29px 39px 48px; max-width: 1580px; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; gap:20px; margin-bottom: 43px; }
+    .breadcrumbs { color: var(--muted); font-size: 12px; }
+    .breadcrumbs strong { color: var(--ink); font-weight: 700; }
+    .top-actions { display:flex; align-items:center; gap: 14px; }
+    .icon-button { width: 34px; height:34px; border-radius: 50%; background: #fff; display:grid; place-items:center; color: var(--muted); border:1px solid var(--line); }
+    .icon-button:hover { color: var(--ink); border-color: #cfd8d0; }
+    .upgrade { background: var(--navy); color:white; border-radius: 9px; padding: 9px 14px; font-size: 11px; font-weight: 700; }
+    .intro { display:flex; align-items:flex-end; justify-content:space-between; gap:20px; margin-bottom: 28px; }
+    h1 { font-size: clamp(28px, 4vw, 43px); line-height: 1.02; letter-spacing: -.065em; margin: 0 0 10px; color: var(--navy); font-weight: 760; }
+    .intro p { color: var(--muted); margin: 0; font-size: 14px; }
+    .create { background: var(--navy); color:#fff; border-radius: 9px; padding: 13px 17px; font-size: 12px; font-weight: 700; display:flex; gap:9px; align-items:center; box-shadow: 0 8px 16px rgba(20,35,45,.12); }
+    .create:hover { background: var(--navy-2); transform: translateY(-1px); }
+    .stats { display:grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 27px; }
+    .stat { background:#fff; border: 1px solid var(--line); border-radius: 13px; padding: 18px 19px; box-shadow: 0 6px 18px rgba(35,48,55,.025); }
+    .stat-top { display:flex; justify-content:space-between; color:var(--muted); font-size:11px; font-weight:650; margin-bottom:14px; }
+    .stat-icon { width: 26px; height:26px; border-radius: 8px; display:grid; place-items:center; color: var(--navy); }
+    .stat:nth-child(1) .stat-icon { background:var(--sage-2); } .stat:nth-child(2) .stat-icon { background:var(--lavender); } .stat:nth-child(3) .stat-icon { background:var(--sand); } .stat:nth-child(4) .stat-icon { background:#f9d9d0; }
+    .stat-value { font-size: 25px; color:var(--navy); font-weight: 730; letter-spacing:-.05em; }
+    .stat-delta { color:#62a77b; font-size:10px; font-weight:700; margin-left: 7px; }
+    .content-grid { display:grid; grid-template-columns: minmax(0, 1.55fr) minmax(270px, .85fr); gap: 18px; }
+    .panel { background:var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px; box-shadow: var(--shadow); }
+    .panel-header { display:flex; align-items:center; justify-content:space-between; gap: 12px; margin-bottom: 18px; }
+    .panel-title { color:var(--navy); font-size:14px; font-weight:760; }
+    .panel-subtitle { color:var(--muted); font-size:11px; margin-top:4px; }
+    .view-all { color:var(--muted); font-size:11px; font-weight:700; cursor:pointer; }
+    .view-all:hover { color:var(--navy); }
+    .workflow { display:flex; align-items:center; gap:13px; padding: 13px 0; border-top:1px solid #eff2ef; }
+    .workflow:first-of-type { border-top:0; }
+    .flow-symbol { width: 37px; height:37px; border-radius: 11px; display:grid; place-items:center; flex:none; color:var(--navy); }
+    .workflow:nth-of-type(2) .flow-symbol { background:var(--sage-2); } .workflow:nth-of-type(3) .flow-symbol { background:var(--lavender); } .workflow:nth-of-type(4) .flow-symbol { background:var(--sand); } .workflow:nth-of-type(5) .flow-symbol { background:#f9d9d0; }
+    .flow-info { min-width:0; flex:1; }
+    .flow-info strong { display:block; color:var(--navy); font-size:12px; margin-bottom:4px; }
+    .flow-info span { color:var(--muted); font-size:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; }
+    .flow-status { padding:5px 8px; border-radius: 20px; font-size:9px; font-weight:750; background:var(--sage-2); color:#4f8961; }
+    .flow-status.paused { background:#f5eee3; color:#ae8651; }
+    .flow-menu { color:#aab4b7; letter-spacing:2px; font-weight:700; font-size:13px; }
+    .activity { display:grid; gap:17px; }
+    .activity-item { display:grid; grid-template-columns:27px 1fr; gap: 11px; align-items:start; }
+    .activity-dot { width:27px; height:27px; display:grid; place-items:center; border-radius:50%; background:var(--sage-2); color:#56916a; }
+    .activity-item:nth-child(2) .activity-dot { background:var(--lavender); color:#7f73bd; } .activity-item:nth-child(3) .activity-dot { background:var(--sand); color:#ba8c4e; } .activity-item:nth-child(4) .activity-dot { background:#f9d9d0; color:#b2735e; }
+    .activity-copy strong { font-size:11px; color:var(--navy); display:block; margin: 2px 0 3px; }
+    .activity-copy span { font-size:10px; color:var(--muted); }
+    .usage { margin-top:18px; background:var(--navy); color:#fff; border-radius:14px; padding:19px 20px; }
+    .usage h3 { font-size:13px; margin:0 0 5px; font-weight:700; }
+    .usage p { color:#9aabb0; font-size:10px; margin:0 0 16px; }
+    .bar { height:6px; border-radius:6px; background:#31454e; overflow:hidden; margin-bottom:8px; }
+    .bar span { display:block; height:100%; width: 68%; background:var(--sage); border-radius:6px; }
+    .usage-meta { display:flex; justify-content:space-between; font-size:10px; color:#afbec1; }
+    .usage-meta strong { color: #fff; }
+    .toast { position: fixed; right: 25px; bottom: 25px; background:var(--navy); color:#fff; padding:13px 16px; border-radius:10px; box-shadow:var(--shadow); font-size:12px; opacity:0; transform:translateY(10px); transition:.22s ease; pointer-events:none; }
+    .toast.show { opacity:1; transform:translateY(0); }
+    @media (max-width: 960px) { .sidebar { width: 70px; padding: 25px 10px; } .brand { padding:0 9px 39px; } .brand-name, .eyebrow, .nav-item span, .workspace { display:none; } .nav-item { justify-content:center; padding:12px 8px; } .main { padding:25px 22px 40px; } }
+    @media (max-width: 680px) { .main { padding: 21px 15px 35px; } .topbar { margin-bottom:32px; } .breadcrumbs { display:none; } .stats { grid-template-columns:repeat(2, 1fr); } .content-grid { grid-template-columns:1fr; } .intro { align-items:flex-start; flex-direction:column; } .create { width:100%; justify-content:center; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand"><div class="brand-mark"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4 4.5h5.2a2.8 2.8 0 1 1 0 5.6H7.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M14 13.5H8.8a2.8 2.8 0 1 1 0-5.6h1.9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div><div class="brand-name">Flow<span>Mation</span></div></div>
+      <div class="eyebrow">Workspace</div>
+      <nav>
+        <button class="nav-item active"><svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="4" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="4" y="14" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="14" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.7"/></svg><span>Overview</span></button>
+        <button class="nav-item"><svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M5 6.5h14M5 12h14M5 17.5h9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="18" cy="17.5" r="1.6" stroke="currentColor" stroke-width="1.6"/></svg><span>My workflows</span></button>
+        <button class="nav-item"><svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M7 5v14M17 5v14M7 9h10M7 15h10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="7" cy="5" r="2" fill="currentColor"/><circle cx="17" cy="19" r="2" fill="currentColor"/></svg><span>Templates</span></button>
+        <button class="nav-item"><svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M6 18V9m6 9V5m6 13v-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M4 20h16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><span>Activity</span></button>
+      </nav>
+      <div class="eyebrow" style="margin-top:30px">Manage</div>
+      <nav>
+        <button class="nav-item"><svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M12 4.5a7.5 7.5 0 1 0 7.5 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M12 4.5V9l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M16.5 4.5h3v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Connections</span></button>
+        <button class="nav-item"><svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4Z" stroke="currentColor" stroke-width="1.7"/><path d="m19.1 13.1 1.1.9-1.8 3-1.3-.5a8 8 0 0 1-1.3.8l-.2 1.4h-3.5l-.2-1.4a8 8 0 0 1-1.3-.8l-1.3.5-1.8-3 1.1-.9a8 8 0 0 1 0-1.6l-1.1-.9 1.8-3 1.3.5a8 8 0 0 1 1.3-.8l.2-1.4h3.5l.2 1.4a8 8 0 0 1 1.3.8l1.3-.5 1.8 3-1.1.9a8 8 0 0 1 0 1.6Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg><span>Settings</span></button>
+      </nav>
+      <div class="workspace"><div class="workspace-label">Personal workspace</div><div class="workspace-user"><div class="avatar">AM</div><div><strong>Alex Morgan</strong><small>alex@flowmation.io</small></div></div></div>
+    </aside>
+    <main class="main">
+      <header class="topbar"><div class="breadcrumbs">Workspace / <strong>Overview</strong></div><div class="top-actions"><button class="icon-button" aria-label="Search"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="10.8" cy="10.8" r="6.2" stroke="currentColor" stroke-width="1.8"/><path d="m16 16 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button><button class="icon-button" aria-label="Notifications"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M18 9.8a6 6 0 0 0-12 0c0 7-3 7-3 8.5h18c0-1.5-3-1.5-3-8.5ZM10 21h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button class="upgrade">Upgrade plan</button></div></header>
+      <section class="intro"><div><h1>Good morning, Alex</h1><p>Here is what is moving through your workspace today.</p></div><button class="create" id="createBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>New workflow</button></section>
+      <section class="stats"><div class="stat"><div class="stat-top"><span>Active workflows</span><span class="stat-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12h5l2-6 3 12 2-6h2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div><div><span class="stat-value">24</span><span class="stat-delta">+12.5%</span></div></div><div class="stat"><div class="stat-top"><span>Tasks completed</span><span class="stat-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="m5 12 4 4L19 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div><div><span class="stat-value">8,429</span><span class="stat-delta">+18.2%</span></div></div><div class="stat"><div class="stat-top"><span>Hours saved</span><span class="stat-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="7.5" stroke="currentColor" stroke-width="1.7"/><path d="M12 8v4l2.5 1.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span></div><div><span class="stat-value">186h</span><span class="stat-delta">+9.4%</span></div></div><div class="stat"><div class="stat-top"><span>Success rate</span><span class="stat-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 17 9 13l3 3 7-8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div><div><span class="stat-value">98.7%</span><span class="stat-delta">+2.1%</span></div></div></section>
+      <section class="content-grid"><div class="panel"><div class="panel-header"><div><div class="panel-title">Your workflows</div><div class="panel-subtitle">The quiet engine behind your day</div></div><span class="view-all" id="viewAll">View all</span></div><div class="workflow"><div class="flow-symbol"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 6h8a3 3 0 0 1 3 3v9M5 18h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="m16 15 3 3-3 3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="flow-info"><strong>New lead enrichment</strong><span>When a new lead enters HubSpot, enrich profile and notify sales</span></div><span class="flow-status">Running</span><span class="flow-menu">•••</span></div><div class="workflow"><div class="flow-symbol"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 7h14M5 12h14M5 17h9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="17.5" cy="17" r="2" stroke="currentColor" stroke-width="1.5"/></svg></div><div class="flow-info"><strong>Weekly team digest</strong><span>Every Monday at 9:00, compile activity into a thoughtful summary</span></div><span class="flow-status">Running</span><span class="flow-menu">•••</span></div><div class="workflow"><div class="flow-symbol"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 5v14M5 5h9a3 3 0 0 1 0 6H5M5 11h8a3 3 0 0 1 0 6H5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div><div class="flow-info"><strong>Invoice follow-up</strong><span>When an invoice is 7 days overdue, send a gentle reminder</span></div><span class="flow-status">Running</span><span class="flow-menu">•••</span></div><div class="workflow"><div class="flow-symbol"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 8.5h12M6 12h8M6 15.5h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M19 4v3M19 17v3M4 12h-1M21 12h1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div><div class="flow-info"><strong>Content review queue</strong><span>Route new drafts to the right reviewer based on topic</span></div><span class="flow-status paused">Paused</span><span class="flow-menu">•••</span></div></div><div><div class="panel"><div class="panel-header"><div><div class="panel-title">Recent activity</div><div class="panel-subtitle">A clear view of your automations</div></div><span class="view-all">All activity</span></div><div class="activity"><div class="activity-item"><div class="activity-dot"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="m5 12 4 4L19 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="activity-copy"><strong>New lead enrichment completed</strong><span>4 minutes ago, 32 records processed</span></div></div><div class="activity-item"><div class="activity-dot"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M6 12h12M12 6v12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div><div class="activity-copy"><strong>Weekly team digest started</strong><span>Today at 09:00, 18 tasks completed</span></div></div><div class="activity-item"><div class="activity-dot"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M12 6v6l4 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div><div class="activity-copy"><strong>Invoice follow-up is waiting</strong><span>Today at 08:42, needs your review</span></div></div><div class="activity-item"><div class="activity-dot"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div><div class="activity-copy"><strong>FlowMation connected to Slack</strong><span>Yesterday at 16:20, connection verified</span></div></div></div></div><div class="usage"><h3>Workspace usage</h3><p>You have used 68% of your monthly task allowance.</p><div class="bar"><span></span></div><div class="usage-meta"><span><strong>8,429</strong> of 12,500 tasks</span><span>Resets in 12 days</span></div></div></div></section>
+      <footer style="text-align:right;color:#a1aaa8;font-size:10px;margin-top:28px;">Powered by MASTECH INNOVATIONS, info@mastechinnovations.com.ng, +2349138825300</footer>
+    </main>
+  </div>
+  <div class="toast" id="toast">Your new workflow is ready to configure.</div>
+  <script>
+    const toast = document.getElementById('toast');
+    document.getElementById('createBtn').addEventListener('click', () => { toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 2600); });
+    document.getElementById('viewAll').addEventListener('click', () => { toast.textContent = 'All workflows are already in view.'; toast.classList.add('show'); setTimeout(() => { toast.classList.remove('show'); toast.textContent = 'Your new workflow is ready to configure.'; }, 2600); });
+    document.querySelectorAll('.nav-item').forEach(item => item.addEventListener('click', () => { document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); item.classList.add('active'); }));
+  </script>
+</body>
+</html>
