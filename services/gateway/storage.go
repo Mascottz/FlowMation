@@ -34,7 +34,8 @@ func openPostgres(ctx context.Context) (*postgresStore, error) {
 func (s *postgresStore) close() error { return s.db.Close() }
 
 func (s *postgresStore) saveWorkflow(ctx context.Context, workspaceID string, workflow Workflow) error {
-	var err error
+	steps, err := json.Marshal(workflow.Steps)
+	if err != nil { return fmt.Errorf("encode workflow steps: %w", err) }
 	_, err = s.db.ExecContext(ctx, `
 		INSERT INTO workflows (id, workspace_id, name, description, status, version)
 		VALUES ($1, $2, $3, $4, $5, $6)
@@ -62,16 +63,6 @@ func (s *postgresStore) listWorkflows(ctx context.Context, workspaceID string) (
 	for rows.Next() {
 		var item Workflow
 		if err := rows.Scan(&item.ID, &item.Name, &item.Description, &item.Status, &item.Version, &item.CreatedAt, &item.UpdatedAt); err != nil { return nil, fmt.Errorf("scan workflow: %w", err) }
-		stepRows, stepErr := s.db.QueryContext(ctx, `SELECT step_key, step_type, position, configuration FROM workflow_steps WHERE workflow_id = $1 ORDER BY position`, item.ID)
-		if stepErr != nil { return nil, fmt.Errorf("list workflow steps: %w", stepErr) }
-		for stepRows.Next() {
-			var step WorkflowStep
-			var config []byte
-			if scanErr := stepRows.Scan(&step.Key, &step.Type, &step.Position, &config); scanErr != nil { stepRows.Close(); return nil, fmt.Errorf("scan workflow step: %w", scanErr) }
-			if decodeErr := json.Unmarshal(config, &step.Configuration); decodeErr != nil { stepRows.Close(); return nil, fmt.Errorf("decode workflow step: %w", decodeErr) }
-			item.Steps = append(item.Steps, step)
-		}
-		stepRows.Close()
 		items = append(items, item)
 	}
 	return items, rows.Err()
