@@ -4,6 +4,7 @@ services:
     environment:
       FLOWMATION_ENGINE_URL: http://engine:8081
       DATABASE_URL: postgres://flowmation:flowmation_local@postgres:5432/flowmation?sslmode=disable
+      REDIS_URL: redis://redis:6379/0
     depends_on:
       engine:
         condition: service_healthy
